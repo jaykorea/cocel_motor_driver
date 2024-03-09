@@ -15,7 +15,11 @@ ros2 launch cocel_driver cocel_driver.launch.py
 ```
 1).   Motor driver parameter configuration file is on 'config' folder
 ii).  Basic can frame interface api is from here(Added getMotorState function on MotorDrive.cpp) - https://github.com/dfki-ric-underactuated-lab/mini-cheetah-tmotor-can
-iii). motor status topic : "~ns/motor_status", tpye: std_msgs::msg::Float32MultiArray
-iv).  run command topic : "~ns/cmd_topic", type : cocel_driver::msg::CocelDriverCmd
-v).   stop command topic : "~ns/stop_topic", type : std_msgs::msg::Empty
+iii). Motor status topic : "~ns/motor_status", tpye: std_msgs::msg::Float32MultiArray
+iv).  Run command topic : "~ns/cmd_topic", type : cocel_driver::msg::CocelDriverCmd
+v).   Stop command topic : "~ns/stop_topic", type : std_msgs::msg::Empty
 ``` 
+## Todo
+```
+i.)   Set Run command limitation 
+```
