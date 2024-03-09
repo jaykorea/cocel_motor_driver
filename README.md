@@ -8,7 +8,7 @@ iii). source install/local_setup.bash
 ```
 ## Launch
 ```
-i).   ros2 launch cocel_driver cocel_driver.launch.py
+ros2 launch cocel_driver cocel_driver.launch.py
 ```
 
 ## Notice
