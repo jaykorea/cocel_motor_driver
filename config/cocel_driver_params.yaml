@@ -1,0 +1,21 @@
+cocel_driver_node:
+  motor_configurator:
+    ros__parameters:
+      can_interface: "can0"
+      left_hip_motor_id: 2
+      left_thigh_motor_id: 9
+      left_leg_motor_id: 11
+      right_hip_motor_id: 7
+      right_thigh_motor_id: 5
+      right_leg_motor_id: 6
+      motor_type: "AK70_10V1p1"
+      POS_MIN : -3.14
+      POS_MAX : 3.14
+      VEL_MIN : -12.56
+      VEL_MAX : 12.56
+      KP_MIN : 0.0
+      KP_MAX : 2.0
+      KD_MIN : 0.0
+      KD_MAX : 5.0
+      T_MIN : 0.
+      T_MAX : 0.
