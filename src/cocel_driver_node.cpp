@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <atomic>
+#include <csignal>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -320,7 +322,7 @@ private:
     }
 
     // RCLCPP_INFO(this->get_logger(), "Moving motors...");
-// 
+
     auto commandState = this->motor_controller->sendRadCommand(commandMap);
 
     return commandState;
@@ -406,8 +408,32 @@ void DisableMotors(motor_driver::MotorDriver& motor_controller, std::vector<int>
   printMotorStates(end_state);
 }
 
+// 예외 발생 여부를 체크할 전역 변수
+std::atomic<bool> hasExceptionOccurred(false);
+
+// SIGINT 핸들러
+void signalHandler(int signum) {
+    (void)signum;
+    rclcpp::shutdown();
+}
+
+// 예외 처리를 포함한 스레드 실행 함수
+void spinNodeWithExceptionHandling(std::shared_ptr<rclcpp::Node> node) {
+    try {
+        rclcpp::spin(node);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught in node: " << e.what() << std::endl;
+        hasExceptionOccurred.store(true);
+        if (rclcpp::ok()) {
+            rclcpp::shutdown();
+        }
+    }
+}
+
 int main(int argc, char * argv[]) {
   rclcpp::init(argc, argv);
+  signal(SIGINT, signalHandler);
+
   auto motor_configurator_node = std::make_shared<MotorConfigurator>();
 
   std::vector<int> motor_ids = motor_configurator_node->getMotorIds();
@@ -427,17 +453,35 @@ int main(int argc, char * argv[]) {
       motor_configurator_node->getTMin(), motor_configurator_node->getTMax());
  // auto publisher_node = std::make_shared<MotorStatusPublisher>(&motor_controller, &motor_ids);
 
-  std::thread configure_node([&]() { rclcpp::spin(motor_configurator_node); });
-  std::thread subscriber_thread([&]() { rclcpp::spin(subscriber_node); });
-  //std::thread publisher_thread([&]() { rclcpp::spin(publisher_node); });
+    //std::thread publisher_thread([&]() { rclcpp::spin(publisher_node); });
+    std::thread configure_thread([&]() { rclcpp::spin(motor_configurator_node); });
+    std::thread subscriber_thread([&]() { rclcpp::spin(subscriber_node); });
 
-  configure_node.join();
-  subscriber_thread.join();
+    // 예외 발생 체크
+  while (rclcpp::ok()) {
+    if (hasExceptionOccurred.load()) {
+        std::cerr << "An exception occurred in one of the nodes. Shutting down..." << std::endl;
+        break;
+    }
+  }
+
+  if (configure_thread.joinable()) {
+      configure_thread.join();
+  }
+  if (subscriber_thread.joinable()) {
+      subscriber_thread.join();
+  }
+  // ROS 종료 처리
+  if (rclcpp::ok()) {
+      DisableMotors(motor_controller, motor_ids);
+      rclcpp::shutdown();
+  }
+  
   // publisher_thread.join();
 
-  rclcpp::shutdown();
-  motor_controller.setZeroPosition(motor_ids);
-  DisableMotors(motor_controller, motor_ids);
+  // rclcpp::shutdown();
+  // motor_controller.setZeroPosition(motor_ids);
+
   
   return 0;
 }
